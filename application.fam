@@ -3,7 +3,7 @@ App(
     name="uBitcoin",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="flipero_app",
-    cdefines=["UBITCOIN_DEMO_APP"],
+    cdefines=["UBITCOIN_DEMO_APP", "USE_STD_STRING"],
     requires=[
         "gui",
     ],
@@ -16,11 +16,11 @@ App(
             ],
             fap_include_paths=[".","trezor"],
             cflags=["-Wno-error","-Wno-unused-parameter"],
-            # cdefines=["USE_STD_STRING"],
+            cdefines=["USE_FLIPPER_HAL_RANDOM"],
 
         ), 
     ],
-    stack_size=6 * 1024,
+    stack_size=20 * 1024,
     order=100,
     fap_description = "",
     fap_author = "codeallnight",

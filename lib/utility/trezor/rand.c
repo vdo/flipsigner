@@ -27,125 +27,52 @@
 #include "sha2.h"
 #include <string.h>
 
-// esp boards
-#if defined(ESP_PLATFORM)
 
-  #include <esp_system.h>
-  uint32_t __attribute__((weak)) random32(void){
-    return esp_random();
-  }
+#if USE_FLIPPER_HAL_RANDOM
 
-#elif defined(ESP8266)
-  // see http://esp8266-re.foogod.com/wiki/Random_Number_Generator
-  #define WDEV_HWRNG ((volatile uint32_t*)0x3ff20e44)
-  uint32_t __attribute__((weak)) random32(void){
-    uint32_t rngint = 0;
-    uint32_t v = 0;
-    for(int i=0; i<4; i++){
-      v = (*WDEV_HWRNG);
-      rngint = (rngint << 8) | v;
-    }
-    return rngint;
-  }
+// NOTE:
+// random32() and random_buffer() have been replaced in this implementation
+// with Flipper Zero specific code. The original code is disabled by #define.
 
-// stm boards
-#elif defined(STM32F0) || defined(STM32F4) || defined(STM32F7) || defined(STM32L0) || defined(STM32L4) || defined(STM32H7) || defined(STM32WB) || defined(STM32G0)
+// Flipper Zero RNG code:
+#include <furi_hal_random.h>
 
-  #if defined(RNG)
+static uint32_t seed = 0;
 
-    // taken from micropython source code
-    #define RNG_TIMEOUT_MS (10)
-
-    uint32_t __attribute__((weak)) random32(void) {
-        // Enable the RNG peripheral if it's not already enabled
-        if (!(RNG->CR & RNG_CR_RNGEN)) {
-            #if defined(STM32H7)
-            // Set RNG Clock source
-            __HAL_RCC_PLLCLKOUT_ENABLE(RCC_PLL1_DIVQ);
-            __HAL_RCC_RNG_CONFIG(RCC_RNGCLKSOURCE_PLL);
-            #endif
-            __HAL_RCC_RNG_CLK_ENABLE();
-            RNG->CR |= RNG_CR_RNGEN;
-        }
-
-        // Wait for a new random number to be ready, takes on the order of 10us
-        uint32_t start = HAL_GetTick();
-        while (!(RNG->SR & RNG_SR_DRDY)) {
-            if (HAL_GetTick() - start >= RNG_TIMEOUT_MS) {
-                return 0;
-            }
-        }
-
-        // Get and return the new random number
-        return RNG->DR;
-    }
-  #else
-
-    // fallback to prng
-    #define UBTC_USE_PRNG
-
-  #endif // defined RNG
-
-// PC
-#elif defined(__unix__) || defined(__APPLE__) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__ANDROID__)
-
-// rand from os random source
-#include <stdlib.h>
-
-uint32_t __attribute__((weak)) random32(void){
-    return (uint32_t)rand();
+void random_reseed(const uint32_t value) {
+    seed = value;
 }
 
-#else
-
-// fallback to prng
-#define UBTC_USE_PRNG
-
-#endif
-
-// fallback option if no RNG on this platform
-#ifdef UBTC_USE_PRNG
-
-#pragma message("\nWARGNING! RANDOM NUMBER GENERATOR IS NOT SUPPORTED ON THIS PLATFORM! \n\
-Pseudo-random generator will be used unless you define\n\
-your own random function like so: \n\n\
-extern \"C\" { \n\
-  uint32_t random32(){\n\
-    ...get random value somehow...\n\
-    return value;\n\
-  }\n\
-}")
-
-
-uint32_t __attribute__((weak)) random32(void) {
-    static uint32_t pad = 0xeda4baba, n = 69, d = 233;
-    static uint8_t dat = 0;
-
-    pad += dat + d * n;
-    pad = (pad << 3) + (pad >> 29);
-    n = pad | 2;
-    d ^= (pad << 31) + (pad >> 1);
-    dat ^= (char)pad ^ (d >> 8) ^ 1;
-
-    return pad ^ (d << 5) ^ (pad >> 18) ^ (dat << 1);
+// Flipper Zero RNG code:
+uint32_t random32(void) {
+    return furi_hal_random_get();
 }
+
+// Flipper Zero RNG code:
+void random_buffer(uint8_t* buf, size_t len) {
+    furi_hal_random_fill_buf(buf, len);
+}
+
 
 #endif // UBTC_USE_PRNG
+
+
+
 
 //
 // The following code is platform independent
 //
 
-void __attribute__((weak)) random_buffer(uint8_t *buf, size_t len)
-{
-	uint32_t r = 0;
-	for (size_t i = 0; i < len; i++) {
-		if (i % 4 == 0) {
-			r = random32();
-		}
-		buf[i] = (r >> ((i % 4) * 8)) & 0xFF;
-	}
-}
+// void __attribute__((weak)) random_buffer(uint8_t *buf, size_t len)
+// {
+// 	uint32_t r = 0;
+// 	for (size_t i = 0; i < len; i++) {
+// 		if (i % 4 == 0) {
+// 			r = random32();
+// 		}
+// 		buf[i] = (r >> ((i % 4) * 8)) & 0xFF;
+// 	}
+// }
 
 uint32_t random_uniform(uint32_t n)
 {

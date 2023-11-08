@@ -40,11 +40,10 @@ void my_draw_callback(Canvas* canvas, void* context) {
 
 void bip(void* context) {
     UNUSED(context);
-    uint8_t entropy[10];
-    furi_hal_random_fill_buf(entropy, 10);
-    //UNUSED(res);
-    //std::string s;
-    //UNUSED(s);
+    FURI_LOG_I(TAG, "Creating HD...");
+    char mnemonic[] = "flight canvas heart purse potato mixed offer tooth maple blue kitten salute almost staff physical remain coral clump midnight rotate innocent shield inch ski";
+    HDPrivateKey* hd = new HDPrivateKey(mnemonic, "");
+    FURI_LOG_I(TAG, "xpub: %s",hd->toString().c_str());
     uint64_t fee;
     PSBT* psbt = new PSBT();
     //psbt->parseBase64("cHNidP8BAHECAAAAAbvujNVeCWqb0qj49V0FE4yNqzxNp/alDjJf6tfrDmLvAAAAAA");

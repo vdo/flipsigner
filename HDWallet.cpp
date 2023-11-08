@@ -242,11 +242,11 @@ size_t HDPrivateKey::from_str(const char * xprvArr, size_t xprvLen){
 int HDPrivateKey::fromSeed(const uint8_t * seed, size_t seedSize, const Network * net){
     init();
     uint8_t raw[64] = { 0 };
-    SHA512 sha;
+    SHA512* sha = new SHA512();
     char key[] = "Bitcoin seed";
-    sha.beginHMAC((uint8_t *)key, strlen(key));
-    sha.write(seed, seedSize);
-    sha.endHMAC(raw);
+    sha->beginHMAC((uint8_t *)key, strlen(key));
+    sha->write(seed, seedSize);
+    sha->endHMAC(raw);
     // sha512Hmac((byte *)key, strlen(key), seed, 64, raw);
     memcpy(num, raw, 32);
     network = net;
@@ -266,21 +266,21 @@ int HDPrivateKey::fromMnemonic(const char * mnemonic, size_t mnemonicSize, const
     uint8_t u[64] = { 0 };
 
     // first round
-    SHA512 sha;
-    sha.beginHMAC((uint8_t *)mnemonic, mnemonicSize);
-    sha.write((uint8_t *)salt, strlen(salt));
-    sha.write((uint8_t *)password, passwordSize);
-    sha.write(ind, sizeof(ind));
-    sha.endHMAC(u);
+    SHA512* sha = new SHA512();
+    sha->beginHMAC((uint8_t *)mnemonic, mnemonicSize);
+    sha->write((uint8_t *)salt, strlen(salt));
+    sha->write((uint8_t *)password, passwordSize);
+    sha->write(ind, sizeof(ind));
+    sha->endHMAC(u);
     memcpy(seed, u, 64);
     // other rounds
     for(int i=1; i<PBKDF2_ROUNDS; i++){
         if(progress_callback != NULL && (i & 0xFF) == 0xFF){
             progress_callback((float)i/(float)(PBKDF2_ROUNDS-1));
         }
-        sha.beginHMAC((uint8_t *)mnemonic, mnemonicSize);
-        sha.write(u, sizeof(u));
-        sha.endHMAC(u);
+        sha->beginHMAC((uint8_t *)mnemonic, mnemonicSize);
+        sha->write(u, sizeof(u));
+        sha->endHMAC(u);
         for(size_t j=0; j<sizeof(seed); j++){
             seed[j] = seed[j] ^ u[j];
         }
