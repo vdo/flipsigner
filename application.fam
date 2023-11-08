@@ -1,0 +1,31 @@
+App(
+    appid="ubitcoin",
+    name="uBitcoin",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="flipero_app",
+    cdefines=["UBITCOIN_DEMO_APP"],
+    requires=[
+        "gui",
+    ],
+    fap_private_libs=[
+        Lib(
+            name="utility",
+            sources=[
+                "trezor/*.c",
+                "*.c"
+            ],
+            fap_include_paths=[".","trezor"],
+            cflags=["-Wno-error","-Wno-unused-parameter"],
+            # cdefines=["USE_STD_STRING"],
+
+        ), 
+    ],
+    stack_size=6 * 1024,
+    order=100,
+    fap_description = "",
+    fap_author = "codeallnight",
+    fap_weburl = "https://github.com/jamisonderek/Flipper-Zero-tutorials",
+    fap_category="UI",
+    fap_icon="icon.png",
+    fap_libs=["assets"],
+)
